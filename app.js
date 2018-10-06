@@ -2,10 +2,16 @@ Math.radians = function(degrees) {
     return degrees * Math.PI / 180;
 };
 
-// Converts from radians to degrees.
 Math.degrees = function(radians) {
     return radians * 180 / Math.PI;
 };
+
+function cos(angle) {
+    return Math.cos(Math.radians(angle));
+}
+function sin(angle) {
+    return Math.sin(Math.radians(angle));
+}
 
 function subscracteAngles(h1, h2) {
     if (h1 < 0 || h1 >= 360) {
@@ -38,15 +44,10 @@ obtacleY = null;
 
 const MS_PER_FRAMES = 60 / 1000; // ms
 const DEBUG = false;
-const population = 30;
-
-// const DEBUG = true;
-// const MS_PER_FRAMES = 200; // ms
-// const population = 3;
+const population = 100;
 
 const VISION = 100; // distance
 const DIST_PER_TICK = 1;
-
 const MAX_ALIGN_TURN = 0.6; // degres
 const MIN_SEPARATION = 50; // distance
 const MOUSE_SIZE = 80;
@@ -64,8 +65,8 @@ class Turtle {
 
     foward() {
         const dist = DIST_PER_TICK;
-        this.x += Math.cos(Math.radians(this.angle)) * dist;
-        this.y += Math.sin(Math.radians(this.angle)) * dist;
+        this.x += cos(this.angle) * dist;
+        this.y += sin(this.angle) * dist;
 
         while (this.x < 0) {
             this.x += gridWidth;
@@ -104,8 +105,6 @@ class Turtle {
 }
 
 function createTurtles() {
-    // turtles.push(new Turtle(100, 100, 200));
-    // turtles.push(new Turtle(100, 100, 220));
     for (let i = 0; i < population; i++) {
         turtles.push(new Turtle(
             Math.random() * (gridWidth),
@@ -169,14 +168,13 @@ function findNerest(flockmate, turtle) {
 
 
 function distanceBetween(t1, t2) {
-    const out = Math.hypot(t2.x-t1.x, t2.y-t1.y);
-    return out;
+    return Math.sqrt((t1.x - t2.x) * (t1.x - t2.x) + (t1.y - t2.y) * (t1.y - t2.y));
 }
 
 function align(me, flockmates) {
     let angle = 0;
-    let sumX = flockmates.reduce((p,n) => p + Math.sin(Math.radians(n.angle)), 0);
-    let sumY = flockmates.reduce((p,n) => p + Math.cos(Math.radians(n.angle)), 0);
+    let sumX = flockmates.reduce((p,n) => p + sin(n.angle), 0);
+    let sumY = flockmates.reduce((p,n) => p + cos(n.angle), 0);
     if (sumX === 0 && sumY === 0) {
         angle = me.angle;
         me.props.angAl = 'me';
@@ -220,10 +218,10 @@ function draw() {
     var img = document.getElementById("scream");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
-    turtles.forEach(t => {
+    for (let i = 0; i < turtles.length; i++) {
+        let t = turtles[i];
+
         rotateAndPaintImage(ctx, img, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
-        // ctx.drawImage(img, t.x, t.y, 20, 15);
-        // ctx.rect(t.x, t.y, 20, 20);
 
         if (DEBUG) {
             var y = 0;
@@ -238,15 +236,14 @@ function draw() {
                 draw(key + ': ' + Math.floor(t.props[key]));
             }
         }
-    });
+    }
     ctx.stroke();
 }
 
 onmousemove = function(event) {
     obtacleX = event.clientX;
     obtacleY = event.clientY;
-}
-
+};
 
 setup();
 go();
