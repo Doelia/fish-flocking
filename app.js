@@ -38,7 +38,7 @@ obtacleY = null;
 
 const MS_PER_FRAMES = 60 / 1000; // ms
 const DEBUG = false;
-const population = 100;
+const population = 30;
 
 // const DEBUG = true;
 // const MS_PER_FRAMES = 200; // ms
@@ -48,7 +48,9 @@ const VISION = 100; // distance
 const DIST_PER_TICK = 1;
 
 const MAX_ALIGN_TURN = 0.6; // degres
-const MIN_SEPARATION = 20; // distance
+const MIN_SEPARATION = 50; // distance
+const MOUSE_SIZE = 80;
+const POISSON_SIZE = 80;
 
 class Turtle {
 
@@ -195,9 +197,9 @@ function obstacle(me) {
     angleObstacle = Math.degrees(angleObstacle);
     const diff = subscracteAngles(angleObstacle, me.angle);
     const distance = distanceBetween({x: obtacleX, y: obtacleY}, me);
-    if (distance <= 30) {
+    if (distance <= MOUSE_SIZE) {
         me.turnTowards(diff, 10);
-        me.foward(10);
+        me.foward(5);
     }
 }
 
@@ -207,10 +209,10 @@ function setup() {
 
 function draw() {
 
-    function rotateAndPaintImage ( context, image, angleInRad , positionX, positionY, axisX, axisY ) {
+    function rotateAndPaintImage ( context, image, angleInRad , positionX, positionY, width, heigth ) {
         context.translate( positionX, positionY );
         context.rotate( angleInRad );
-        context.drawImage( image, -axisX, -axisY, 20, 16);
+        context.drawImage( image, -width/2, -heigth/2, width, heigth);
         context.rotate( -angleInRad );
         context.translate( -positionX, -positionY );
     }
@@ -219,7 +221,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
     turtles.forEach(t => {
-        rotateAndPaintImage(ctx, img, Math.radians(t.angle), t.x, t.y, 10, 8);
+        rotateAndPaintImage(ctx, img, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
         // ctx.drawImage(img, t.x, t.y, 20, 15);
         // ctx.rect(t.x, t.y, 20, 20);
 
