@@ -1,3 +1,169 @@
+function FishFlocking() {
+
+    var MS_PER_FRAMES = 60 / 1000;
+    var POPULATION = 400;
+    var VISION = 60; // distance
+    var DIST_PER_TICK = 1;
+    var MAX_ALIGN_TURN = 0.6; // degres
+    var MIN_SEPARATION = 30; // distance
+    var MOUSE_SIZE = 40;
+    var DIST_ON_MOUSE = 2;
+    var POISSON_SIZE = 30;
+
+    var ctx;
+    var img;
+
+    var turtles = [];
+    var gridWidth;
+    var gridHeight;
+    var obstacleX = null;
+    var obstacleY = null;
+
+    var Turtle = function(x, y, orientation) {
+
+        this.x = x;
+        this.y = y;
+        this.angle = orientation;
+
+        this.foward = function(dist) {
+            this.x += cos(this.angle) * dist;
+            this.y += sin(this.angle) * dist;
+
+            while (this.x < 0) {
+                this.x += gridWidth;
+            }
+            while (this.y < 0) {
+                this.y += gridHeight;
+            }
+
+            this.x %= gridWidth;
+            this.y %= gridHeight;
+        };
+
+        this.turnTowards = function(angle, max) {
+            var sub = subscracteAngles(this.angle, angle);
+            this.turnAtMost(sub, max);
+        };
+
+        this.turnAtMost = function(turn, max) {
+            if (Math.abs(turn) > max) {
+                this.angle -= turn > 0 ? max : -max;
+            } else {
+                this.angle -= turn;
+            }
+
+            this.angle %= 360;
+            while (this.angle < 0) {
+                this.angle += 360;
+            }
+        }
+    };
+
+    function setup(canvas, img_input) {
+
+        img = img_input;
+
+        ctx = canvas.getContext("2d");
+        gridWidth = canvas.width;
+        gridHeight = canvas.height;
+
+        for (var i = 0; i < POPULATION; i++) {
+            turtles.push(new Turtle(
+                Math.random() * (gridWidth),
+                Math.random() * (gridHeight),
+                Math.random() * 360));
+        }
+
+        onmousemove = function(event) {
+            obstacleX = event.clientX;
+            obstacleY = event.clientY;
+        };
+
+        window.addEventListener('resize', function() {
+            gridWidth = canvas.width;
+            gridHeight = canvas.height;
+        }, false);
+
+    }
+
+    function go() {
+
+        turtles.forEach(function(t) {
+            flock(t);
+            obstacle(t);
+            t.foward(DIST_PER_TICK);
+        });
+        draw();
+
+        setTimeout(function() {
+            go();
+        }, MS_PER_FRAMES);
+    }
+
+    function flock(me) {
+        var flockmates = findFlockmates(me);
+        if (flockmates.length) {
+            var distance = findNerestDistance(flockmates, me);
+            if (distance >= MIN_SEPARATION) {
+                align(me, flockmates);
+            } else {
+                me.turnTowards(Math.random()*360, 1);
+            }
+        } else {
+            me.turnTowards(Math.random()*360, 1);
+        }
+    }
+
+    function findFlockmates(me) {
+        return turtles.filter(function(t) {
+            var distance = distanceBetween(t, me);
+            return distance && distance <= VISION;
+        });
+    }
+
+    function findNerestDistance(flockmate, turtle) {
+        return flockmate.reduce(function (p,c) {
+            return Math.min(distanceBetween(c, turtle));
+        }, gridWidth * gridHeight);
+    }
+
+    function align(me, flockmates) {
+        var sumX = flockmates.reduce(function(p,n) {
+            return p + sin(n.angle);
+        }, 0);
+
+        var sumY = flockmates.reduce(function(p,n) {
+            return p + cos(n.angle);
+        }, 0);
+
+        var angle = Math.degrees(Math.atan2(sumX, sumY));
+        me.turnTowards(angle, MAX_ALIGN_TURN);
+    }
+
+    function obstacle(me) {
+        if (!obstacleX || !obstacleY) {
+            return false;
+        }
+        var angleObstacle = Math.degrees(Math.atan2(obstacleY - me.y, obstacleX - me.x));
+        var diff = subscracteAngles(angleObstacle, me.angle);
+        if (distanceBetween({x: obstacleX, y: obstacleY}, me) <= MOUSE_SIZE) {
+            me.turnTowards(diff, 10);
+            me.foward(DIST_ON_MOUSE);
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, gridWidth, gridHeight);
+        for (var i = 0; i < turtles.length; i++) {
+            var t = turtles[i];
+            rotateAndPaintImage(ctx, img, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
+        }
+    }
+
+    this.setup = setup;
+    this.go = go;
+}
+
 Math.radians = function(degrees) {
     return degrees * Math.PI / 180;
 };
@@ -30,146 +196,6 @@ function subscracteAngles(h1, h2) {
     }
 }
 
-var canvas = document.getElementById("canvas");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-var ctx = canvas.getContext("2d");
-var img = document.getElementById("poisson");
-
-var turtles = [];
-gridWidth = canvas.width;
-gridHeight = canvas.height;
-var ID = 1;
-obtacleX = null;
-obtacleY = null;
-
-var MS_PER_FRAMES = 60 / 1000; // ms
-var POPULATION = 60;
-var VISION = 80; // distance
-var DIST_PER_TICK = 1;
-var DIST_ON_MOUSE = 2;
-var MAX_ALIGN_TURN = 0.6; // degres
-var MIN_SEPARATION = 65; // distance
-var MOUSE_SIZE = 80;
-var POISSON_SIZE = 80;
-
-var Turtle = function(x, y, orientation) {
-
-    this.id = ID++;
-    this.x = x;
-    this.y = y;
-    this.angle = orientation;
-    this.props = {};
-
-    this.foward = function(dist) {
-        this.x += cos(this.angle) * dist;
-        this.y += sin(this.angle) * dist;
-
-        while (this.x < 0) {
-            this.x += gridWidth;
-        }
-        while (this.y < 0) {
-            this.y += gridHeight;
-        }
-
-        this.x %= gridWidth;
-        this.y %= gridHeight;
-    };
-
-    this.turnTowards = function(angle, max) {
-        var sub = subscracteAngles(this.angle, angle);
-        this.turnAtMost(sub, max);
-    };
-
-    this.turnAtMost = function(turn, max) {
-        if (Math.abs(turn) > max) {
-            this.angle -= turn > 0 ? max : -max;
-        } else {
-            this.angle -= turn;
-        }
-
-        this.angle %= 360;
-        while (this.angle < 0) {
-            this.angle += 360;
-        }
-
-    }
-};
-
-function setup() {
-    for (var i = 0; i < POPULATION; i++) {
-        turtles.push(new Turtle(
-            Math.random() * (gridWidth),
-            Math.random() * (gridHeight),
-            Math.random() * 360));
-    }
-}
-
-function go() {
-    turtles.forEach(function(t) {
-        t.props = {};
-        flock(t);
-        obstacle(t);
-        t.foward(DIST_PER_TICK);
-    });
-    draw();
-
-    setTimeout(function() {
-        go();
-    }, MS_PER_FRAMES );
-}
-
-function flock(me) {
-    var flockmates = findFlockmates(me);
-    if (flockmates.length) {
-        var nerest = findNerestDistance(flockmates, me);
-        if (nerest) {
-            if (nerest >= MIN_SEPARATION) {
-                align(me, flockmates);
-            } else {
-                me.turnTowards(Math.random()*360, 1);
-            }
-        }
-    } else {
-        me.turnTowards(Math.random()*360, 1);
-    }
-}
-
-function findFlockmates(turtle) {
-    return turtles.filter(function(v) {
-        return v.id !== turtle.id && distanceBetween(v, turtle) < VISION
-    });
-}
-
-function findNerestDistance(flockmate, turtle) {
-    return flockmate.reduce(function (p,c) {
-        return Math.min(distanceBetween(c, turtle));
-    }, gridWidth * gridHeight);
-}
-
-function distanceBetween(t1, t2) {
-    return Math.sqrt((t1.x - t2.x) * (t1.x - t2.x) + (t1.y - t2.y) * (t1.y - t2.y));
-}
-
-function align(me, flockmates) {
-    var sumX = flockmates.reduce((p,n) => p + sin(n.angle), 0);
-    var sumY = flockmates.reduce((p,n) => p + cos(n.angle), 0);
-    var angle = Math.degrees(Math.atan2(sumX, sumY));
-    me.turnTowards(angle, MAX_ALIGN_TURN);
-}
-
-function obstacle(me) {
-    if (!obtacleX || !obtacleY) {
-        return false;
-    }
-    var angleObstacle = Math.degrees(Math.atan2(obtacleY - me.y, obtacleX - me.x));
-    var diff = subscracteAngles(angleObstacle, me.angle);
-    if (distanceBetween({x: obtacleX, y: obtacleY}, me) <= MOUSE_SIZE) {
-        me.turnTowards(diff, 10);
-        me.foward(DIST_ON_MOUSE);
-    }
-}
-
 function rotateAndPaintImage(context, image, angleInRad, positionX, positionY, width, heigth ) {
     context.translate(positionX, positionY);
     context.rotate( angleInRad);
@@ -178,18 +204,6 @@ function rotateAndPaintImage(context, image, angleInRad, positionX, positionY, w
     context.translate(-positionX, -positionY);
 }
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < turtles.length; i++) {
-        var t = turtles[i];
-        rotateAndPaintImage(ctx, img, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
-    }
+function distanceBetween(t1, t2) {
+    return Math.sqrt((t1.x - t2.x) * (t1.x - t2.x) + (t1.y - t2.y) * (t1.y - t2.y));
 }
-
-onmousemove = function(event) {
-    obtacleX = event.clientX;
-    obtacleY = event.clientY;
-};
-
-setup();
-go();
