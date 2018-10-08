@@ -1,14 +1,15 @@
 function FishFlocking() {
 
     var MS_PER_FRAMES = 60 / 1000;
-    var POPULATION = 400;
-    var VISION = 60; // distance
+    var POPULATION = 800;
+    var VISION = 20; // distance
     var DIST_PER_TICK = 1;
-    var MAX_ALIGN_TURN = 0.6; // degres
-    var MIN_SEPARATION = 30; // distance
+    var MAX_ALIGN_TURN = 1.2; // degres
+    var MAX_SEPARATE_TURN = 0.3; // degres
+    var MIN_SEPARATION = 8; // distance
     var MOUSE_SIZE = 40;
     var DIST_ON_MOUSE = 2;
-    var POISSON_SIZE = 30;
+    var POISSON_SIZE = 20;
 
     var ctx;
     var img;
@@ -41,15 +42,20 @@ function FishFlocking() {
         };
 
         this.turnTowards = function(angle, max) {
+            var sub = subscracteAngles(angle, this.angle);
+            this.turnAtMost(sub, max);
+        };
+
+        this.turnAway = function(angle, max) {
             var sub = subscracteAngles(this.angle, angle);
             this.turnAtMost(sub, max);
         };
 
         this.turnAtMost = function(turn, max) {
             if (Math.abs(turn) > max) {
-                this.angle -= turn > 0 ? max : -max;
+                this.angle += turn > 0 ? max : -max;
             } else {
-                this.angle -= turn;
+                this.angle += turn;
             }
 
             this.angle %= 360;
@@ -103,11 +109,12 @@ function FishFlocking() {
     function flock(me) {
         var flockmates = findFlockmates(me);
         if (flockmates.length) {
-            var distance = findNerestDistance(flockmates, me);
+            var nerest = findNerest(flockmates, me);
+            var distance = distanceBetween(nerest, me);
             if (distance >= MIN_SEPARATION) {
                 align(me, flockmates);
             } else {
-                me.turnTowards(Math.random()*360, 1);
+                separate(me, nerest);
             }
         } else {
             me.turnTowards(Math.random()*360, 1);
@@ -121,10 +128,18 @@ function FishFlocking() {
         });
     }
 
-    function findNerestDistance(flockmate, turtle) {
-        return flockmate.reduce(function (p,c) {
-            return Math.min(distanceBetween(c, turtle));
-        }, gridWidth * gridHeight);
+    function findNerest(flockmate, turtle) {
+        var nerest = null;
+        var minDist = 0;
+        for (var i = 0; i < flockmate.length; i++) {
+            var t = flockmate[i];
+            var dist = distanceBetween(t, turtle);
+            if (!nerest || dist < minDist) {
+                nerest = t;
+                minDist = dist;
+            }
+        }
+        return nerest;
     }
 
     function align(me, flockmates) {
@@ -140,14 +155,18 @@ function FishFlocking() {
         me.turnTowards(angle, MAX_ALIGN_TURN);
     }
 
+    function separate(me, nerestTurtle) {
+        me.turnAway(nerestTurtle.angle, MAX_SEPARATE_TURN);
+    }
+
     function obstacle(me) {
         if (!obstacleX || !obstacleY) {
             return false;
         }
         var angleObstacle = Math.degrees(Math.atan2(obstacleY - me.y, obstacleX - me.x));
-        var diff = subscracteAngles(angleObstacle, me.angle);
+        var diff = subscracteAngles(me.angle, angleObstacle);
         if (distanceBetween({x: obstacleX, y: obstacleY}, me) <= MOUSE_SIZE) {
-            me.turnTowards(diff, 10);
+            me.turnTowards(180 - diff, 10);
             me.foward(DIST_ON_MOUSE);
         }
     }
