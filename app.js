@@ -1,15 +1,15 @@
 function FishFlocking() {
 
     var MS_PER_FRAMES = 60 / 1000;
-    var POPULATION = 800;
-    var VISION = 20; // distance
+    var POPULATION =70;
+    var VISION = 120; // distance
     var DIST_PER_TICK = 1;
     var MAX_ALIGN_TURN = 1.2; // degres
-    var MAX_SEPARATE_TURN = 0.3; // degres
-    var MIN_SEPARATION = 8; // distance
-    var MOUSE_SIZE = 40;
+    var MAX_SEPARATE_TURN = 0.8; // degres
+    var MIN_SEPARATION = 30; // distance
+    var MOUSE_SIZE = 200;
     var DIST_ON_MOUSE = 2;
-    var POISSON_SIZE = 20;
+    var POISSON_SIZE = 80;
 
     var ctx;
     var img;
@@ -117,7 +117,7 @@ function FishFlocking() {
                 separate(me, nerest);
             }
         } else {
-            me.turnTowards(Math.random()*360, 1);
+//            me.turnTowards(Math.random()*360, 1);
         }
     }
 
