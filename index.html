@@ -1,77 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset=utf-8>
-<title>Fish Flocking</title>
-<link href="https://fonts.googleapis.com/css?family=Poppins:700" rel="stylesheet">
-<style>
-    html, body { width:100%; height:100%; margin:0; padding:0; }
-    canvas { display:block; background: white; }
-    .text {
-    position: fixed;
-    line-height: 100px;
-    text-align: center;
-    top: 50%;
-    left: 50%;
-    font-family: 'Poppins';
-          font-size: 100px;
-    transform: translateX(-50%) translateY(-50%);
-    background: -webkit-linear-gradient(left, #ED6C84, #F7D100);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-    }
-	.settings {
-		position: fixed;
-		right: 10px;
-		top: 10px;
-		background: rgba(0,0,0,0.2);
-		padding: 10px;
-	}
-</style>
+	<meta charset=utf-8>
+	<title>Fish Flocking</title>
+	<link href="https://fonts.googleapis.com/css?family=Poppins:700" rel="stylesheet">
+	<style>
+		html, body { width:100%; height:100%; margin:0; padding:0; }
+		canvas { display:block; background: #2a2a2a; }
+		.settings {
+            color: white;
+			position: fixed;
+			right: 10px;
+			top: 10px;
+			background: rgba(0,0,0,0.2);
+			padding: 10px;
+		}
+	</style>
 </head>
 <body>
-<img id="poisson" src="poisson_gray.png" style="display: none">
-<canvas id="canvas"></canvas>
-<div class="settings">
-	Nombre :<br>
-	<input type="range" min="1" max="1000" value="100" class="fish-option" id="POPULATION"> <br>
-	Taille: <br>
-	<input type="range" min="20" max="100" value="60" class="fish-option" id="POISSON_SIZE"> <br>
-	Vitesse: <br>
-	<input type="range" min="1" max="7" value="1" class="fish-option" id="DIST_PER_TICK"> <br>
-	Espacement: <br>
-	<input type="range" min="0" max="50" value="30" class="fish-option" id="MIN_SEPARATION"> <br>
+    <img id="poisson" src="poisson_gray.png" style="display: none">
+    <canvas id="canvas"></canvas>
 
-</div>
+    <div class="settings">
+        Population :<br>
+        <input type="range" min="1" max="1000" value="100" class="fish-option" id="POPULATION"> <br>
+        Size: <br>
+        <input type="range" min="20" max="100" value="60" class="fish-option" id="POISSON_SIZE"> <br>
+        Speed: <br>
+        <input type="range" min="1" max="7" value="1" class="fish-option" id="DIST_PER_TICK"> <br>
+        Distance: <br>
+        <input type="range" min="0" max="50" value="30" class="fish-option" id="MIN_SEPARATION"> <br>
+    </div>
 
-<div class="text">Le web sans<br>les arêtes.</div>
-<script src="app.js"></script>
-<script type="application/javascript">
-var canvas = document.getElementById("canvas");
-var img = document.getElementById("poisson");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-        window.addEventListener('resize', function() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        var fishFlocking = new FishFlocking();
-        fishFlocking.setup(canvas, img);
-        fishFlocking.go();
-
-        HTMLCollection.prototype.forEach = Array.prototype.forEach;
-        document.getElementsByClassName("fish-option").forEach(function(element) {
-            var update = function() {
-                fishFlocking.eval(element.id + " = " + this.value);
-                if (element.id === 'POPULATION') {
-                    fishFlocking.eval('setupPopulation()');
-                }
-            };
-            element.oninput = update;
-        });
-
-	</script>
-	</body>
+    <script src="fishflocking.js"></script>
+    <script src="app.js"></script>
+</body>
 </html>
