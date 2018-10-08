@@ -1,7 +1,7 @@
 function FishFlocking() {
 
     var MS_PER_FRAMES = 60 / 1000;
-    var POPULATION =70;
+    var POPULATION = 100;
     var VISION = 120; // distance
     var DIST_PER_TICK = 1;
     var MAX_ALIGN_TURN = 1.2; // degres
@@ -9,7 +9,7 @@ function FishFlocking() {
     var MIN_SEPARATION = 30; // distance
     var MOUSE_SIZE = 200;
     var DIST_ON_MOUSE = 2;
-    var POISSON_SIZE = 80;
+    var POISSON_SIZE = 60;
 
     var ctx;
     var img;
@@ -73,12 +73,7 @@ function FishFlocking() {
         gridWidth = canvas.width;
         gridHeight = canvas.height;
 
-        for (var i = 0; i < POPULATION; i++) {
-            turtles.push(new Turtle(
-                Math.random() * (gridWidth),
-                Math.random() * (gridHeight),
-                Math.random() * 360));
-        }
+        setupPopulation();
 
         onmousemove = function(event) {
             obstacleX = event.clientX;
@@ -178,6 +173,23 @@ function FishFlocking() {
             rotateAndPaintImage(ctx, img, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
         }
     }
+
+    function setupPopulation() {
+        for (var i = 0; i < POPULATION - turtles.length; i++) {
+            turtles.push(new Turtle(
+                Math.random() * (gridWidth),
+                Math.random() * (gridHeight),
+                Math.random() * 360));
+        }
+        if (turtles.length > POPULATION) {
+            turtles = turtles.slice(0, POPULATION);
+        }
+    }
+
+    this.eval = function(s) {
+        console.log('s', s);
+        eval(s);
+    };
 
     this.setup = setup;
     this.go = go;
