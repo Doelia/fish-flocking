@@ -22,8 +22,7 @@ function FishFlocking() {
     var turtles = [];
     var gridWidth;
     var gridHeight;
-    var obstacleX = null;
-    var obstacleY = null;
+    var obstacles = [];
 
     var Turtle = function(x, y, orientation) {
 
@@ -83,28 +82,33 @@ function FishFlocking() {
         setupPopulation();
 
         onmousemove = function(event) {
-            console.log('move');
-            obstacleX = event.clientX;
-            obstacleY = event.clientY;
+            obstacles = [{
+                x: event.clientX,
+                y: event.clientY
+            }];
         };
 
         window.addEventListener('touchstart', function(e) {
             clearTimeout(this.touchTimout);
             var touch = e.changedTouches[0];
-            obstacleX = touch.clientX;
-            obstacleY = touch.clientY;
+            obstacles = [{
+                x: touch.clientX,
+                y: touch.clientY
+            }];
         });
 
         window.addEventListener('touchmove', function(e) {
             var touch = e.changedTouches[0];
-            obstacleX = touch.clientX;
-            obstacleY = touch.clientY;
+            obstacles = [{
+                x: touch.clientX,
+                y: touch.clientY
+            }];
         });
 
         window.addEventListener('touchend', function(e) {
             this.touchTimout = setTimeout(function() {
-                obstacleX = null;
-            }, 1000);
+                obstacles = [];
+            }, 800);
         });
 
         window.addEventListener('resize', function() {
@@ -126,7 +130,6 @@ function FishFlocking() {
         turtles.forEach(function(t) {
             flock(t);
             avoidUser(t);
-            // attrackUser(t);
             t.foward(DIST_PER_TICK);
         });
         draw();
@@ -191,26 +194,15 @@ function FishFlocking() {
     }
 
     function avoidUser(me) {
-        if (!obstacleX || !obstacleY) {
-            return false;
-        }
-        if (distanceBetween({x: obstacleX, y: obstacleY}, me) <= MOUSE_SIZE) {
-            var angleObstacle = Math.degrees(Math.atan2(obstacleY - me.y, obstacleX - me.x));
-            var diff = subscracteAngles(me.angle, angleObstacle);
-            me.turnTowards(180 - diff, 10);
-            me.foward(DIST_ON_MOUSE);
-            me.isSuper = true;
-        }
-    }
-
-    function attrackUser(me) {
-        if (!obstacleX || !obstacleY) {
-            return false;
-        }
-        var angleObstacle = Math.degrees(Math.atan2(obstacleY - me.y, obstacleX - me.x));
-        me.angle = angleObstacle;
-        me.foward(DIST_ON_MOUSE);
-        me.isSuper = true;
+        obstacles.forEach(function(obstacle) {
+            if (distanceBetween({x: obstacle.x, y: obstacle.y}, me) <= MOUSE_SIZE) {
+                var angleObstacle = Math.degrees(Math.atan2(obstacle.y - me.y, obstacle.x - me.x));
+                var diff = subscracteAngles(me.angle, angleObstacle);
+                me.turnTowards(180 - diff, 10);
+                me.foward(DIST_ON_MOUSE);
+                me.isSuper = true;
+            }
+        });
     }
 
     function draw() {
