@@ -1,16 +1,19 @@
 function FishFlocking() {
 
-    var MS_PER_FRAMES = 60 / 1000;
     var POPULATION = 200;
-    var VISION = 120; // distance
+    var ADAPT_POPULATION_WITH_RESOLUTION = true; // Less turtles on litle screens
+    var POISSON_SIZE = 50;
+
     var DIST_PER_TICK = 1;
+    var VISION = 120; // distance
     var MAX_ALIGN_TURN = 1.2; // degres
     var MAX_SEPARATE_TURN = 0.8; // degres
     var MIN_SEPARATION = 30; // distance
+
     var MOUSE_SIZE = 200;
     var DIST_ON_MOUSE = 2;
-    var POISSON_SIZE = 50;
-    var ADAPT_POPULATION_FROM_RESOLUTION = true; // Less turtles on litle screens
+
+    var MS_PER_FRAMES = 60 / 1000;
 
     var ctx;
     var img;
@@ -27,6 +30,7 @@ function FishFlocking() {
         this.x = x;
         this.y = y;
         this.angle = orientation;
+        this.isSuper = false;
 
         this.foward = function(dist) {
             this.x += cos(this.angle) * dist;
@@ -79,16 +83,37 @@ function FishFlocking() {
         setupPopulation();
 
         onmousemove = function(event) {
+            console.log('move');
             obstacleX = event.clientX;
             obstacleY = event.clientY;
         };
 
+        window.addEventListener('touchstart', function(e) {
+            clearTimeout(this.touchTimout);
+            var touch = e.changedTouches[0];
+            obstacleX = touch.clientX;
+            obstacleY = touch.clientY;
+        });
+
+        window.addEventListener('touchmove', function(e) {
+            var touch = e.changedTouches[0];
+            obstacleX = touch.clientX;
+            obstacleY = touch.clientY;
+        });
+
+        window.addEventListener('touchend', function(e) {
+            this.touchTimout = setTimeout(function() {
+                obstacleX = null;
+            }, 1000);
+        });
+
         window.addEventListener('resize', function() {
+            console.log(canvas.width);
             gridWidth = canvas.width;
             gridHeight = canvas.height;
         }, false);
 
-        if (ADAPT_POPULATION_FROM_RESOLUTION) {
+        if (ADAPT_POPULATION_WITH_RESOLUTION) {
             window.addEventListener('resize', function() {
                 setupPopulation();
             }, false);
@@ -100,7 +125,8 @@ function FishFlocking() {
 
         turtles.forEach(function(t) {
             flock(t);
-            obstacle(t);
+            avoidUser(t);
+            // attrackUser(t);
             t.foward(DIST_PER_TICK);
         });
         draw();
@@ -111,6 +137,7 @@ function FishFlocking() {
     }
 
     function flock(me) {
+        me.isSuper = false;
         var flockmates = findFlockmates(me);
         if (flockmates.length) {
             var nerest = findNerest(flockmates, me);
@@ -163,34 +190,43 @@ function FishFlocking() {
         me.turnAway(nerestTurtle.angle, MAX_SEPARATE_TURN);
     }
 
-    function obstacle(me) {
+    function avoidUser(me) {
+        if (!obstacleX || !obstacleY) {
+            return false;
+        }
+        if (distanceBetween({x: obstacleX, y: obstacleY}, me) <= MOUSE_SIZE) {
+            var angleObstacle = Math.degrees(Math.atan2(obstacleY - me.y, obstacleX - me.x));
+            var diff = subscracteAngles(me.angle, angleObstacle);
+            me.turnTowards(180 - diff, 10);
+            me.foward(DIST_ON_MOUSE);
+            me.isSuper = true;
+        }
+    }
+
+    function attrackUser(me) {
         if (!obstacleX || !obstacleY) {
             return false;
         }
         var angleObstacle = Math.degrees(Math.atan2(obstacleY - me.y, obstacleX - me.x));
-        var diff = subscracteAngles(me.angle, angleObstacle);
-        if (distanceBetween({x: obstacleX, y: obstacleY}, me) <= MOUSE_SIZE) {
-            me.turnTowards(180 - diff, 10);
-            me.foward(DIST_ON_MOUSE);
-        }
+        me.angle = angleObstacle;
+        me.foward(DIST_ON_MOUSE);
+        me.isSuper = true;
     }
 
     function draw() {
         ctx.clearRect(0, 0, gridWidth, gridHeight);
         for (var i = 0; i < turtles.length; i++) {
             var t = turtles[i];
-            var imgDrawed = (i === 0) ? img_super : img;
+            var imgDrawed = t.isSuper ? img_super : img;
             rotateAndPaintImage(ctx, imgDrawed, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
         }
     }
 
     function setupPopulation() {
 
-        var targetPopulation = ADAPT_POPULATION_FROM_RESOLUTION
+        var targetPopulation = ADAPT_POPULATION_WITH_RESOLUTION
             ? Math.floor(POPULATION * (gridHeight * gridWidth) / (1920 * 1080))
             : POPULATION;
-
-        console.log(targetPopulation);
 
         for (var i = 0; i < targetPopulation - turtles.length; i++) {
             turtles.push(new Turtle(
@@ -198,13 +234,13 @@ function FishFlocking() {
                 Math.random() * (gridHeight),
                 Math.random() * 360));
         }
+
         if (turtles.length > targetPopulation) {
             turtles = turtles.slice(0, targetPopulation);
         }
     }
 
     this.eval = function(s) {
-        console.log('s', s);
         eval(s);
     };
 

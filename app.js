@@ -4,12 +4,14 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 window.addEventListener('resize', function() {
+    console.log(window.innerWidth);
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 });
 
 var fishFlocking = new FishFlocking();
-fishFlocking.setup(canvas,
+fishFlocking.setup(
+    canvas,
     document.getElementById("poisson"),
     document.getElementById("poisson_super")
 );
