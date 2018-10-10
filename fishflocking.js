@@ -1,7 +1,7 @@
 function FishFlocking() {
 
     var MS_PER_FRAMES = 60 / 1000;
-    var POPULATION = 100;
+    var POPULATION = 200;
     var VISION = 120; // distance
     var DIST_PER_TICK = 1;
     var MAX_ALIGN_TURN = 1.2; // degres
@@ -9,10 +9,12 @@ function FishFlocking() {
     var MIN_SEPARATION = 30; // distance
     var MOUSE_SIZE = 200;
     var DIST_ON_MOUSE = 2;
-    var POISSON_SIZE = 60;
+    var POISSON_SIZE = 50;
+    var ADAPT_POPULATION_FROM_RESOLUTION = true; // Less turtles on litle screens
 
     var ctx;
     var img;
+    var img_super;
 
     var turtles = [];
     var gridWidth;
@@ -65,9 +67,10 @@ function FishFlocking() {
         }
     };
 
-    function setup(canvas, img_input) {
+    function setup(canvas, img_input, img_super_input) {
 
         img = img_input;
+        img_super = img_super_input;
 
         ctx = canvas.getContext("2d");
         gridWidth = canvas.width;
@@ -84,6 +87,12 @@ function FishFlocking() {
             gridWidth = canvas.width;
             gridHeight = canvas.height;
         }, false);
+
+        if (ADAPT_POPULATION_FROM_RESOLUTION) {
+            window.addEventListener('resize', function() {
+                setupPopulation();
+            }, false);
+        }
 
     }
 
@@ -170,19 +179,27 @@ function FishFlocking() {
         ctx.clearRect(0, 0, gridWidth, gridHeight);
         for (var i = 0; i < turtles.length; i++) {
             var t = turtles[i];
-            rotateAndPaintImage(ctx, img, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
+            var imgDrawed = (i === 0) ? img_super : img;
+            rotateAndPaintImage(ctx, imgDrawed, Math.radians(t.angle), t.x, t.y, POISSON_SIZE, POISSON_SIZE * 0.6);
         }
     }
 
     function setupPopulation() {
-        for (var i = 0; i < POPULATION - turtles.length; i++) {
+
+        var targetPopulation = ADAPT_POPULATION_FROM_RESOLUTION
+            ? Math.floor(POPULATION * (gridHeight * gridWidth) / (1920 * 1080))
+            : POPULATION;
+
+        console.log(targetPopulation);
+
+        for (var i = 0; i < targetPopulation - turtles.length; i++) {
             turtles.push(new Turtle(
                 Math.random() * (gridWidth),
                 Math.random() * (gridHeight),
                 Math.random() * 360));
         }
-        if (turtles.length > POPULATION) {
-            turtles = turtles.slice(0, POPULATION);
+        if (turtles.length > targetPopulation) {
+            turtles = turtles.slice(0, targetPopulation);
         }
     }
 

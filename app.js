@@ -1,5 +1,4 @@
 var canvas = document.getElementById("canvas");
-var img = document.getElementById("poisson");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -10,7 +9,10 @@ window.addEventListener('resize', function() {
 });
 
 var fishFlocking = new FishFlocking();
-fishFlocking.setup(canvas, img);
+fishFlocking.setup(canvas,
+    document.getElementById("poisson"),
+    document.getElementById("poisson_super")
+);
 fishFlocking.go();
 
 HTMLCollection.prototype.forEach = Array.prototype.forEach;
