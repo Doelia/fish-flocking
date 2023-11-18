@@ -1,3 +1,7 @@
+/**
+ * Copyright 2018 Stéphane Wouters
+ */
+
 function FishFlocking() {
 
     var POPULATION = 200;
